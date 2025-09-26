@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
-import { ArrowLeft, CheckCircle, Heart, Lightbulb } from 'lucide-react';
-import { Task, EmotionalState } from '../types';
+import { ArrowLeft, CheckCircle, Heart, Lightbulb, Camera, Crown } from 'lucide-react';
+import { Task, EmotionalState, UserPlan } from '../types';
+import PhotoCapture from './PhotoCapture';
 
 interface TaskDetailProps {
   task: Task;
+  userPlan: UserPlan;
   onBack: () => void;
   onComplete: (taskId: string, completionMood: EmotionalState) => void;
+  onCompleteWithPhoto: (taskId: string, completionMood: EmotionalState, photo: string) => void;
+  onUpgrade: () => void;
 }
 
-const TaskDetail: React.FC<TaskDetailProps> = ({ task, onBack, onComplete }) => {
+const TaskDetail: React.FC<TaskDetailProps> = ({ task, userPlan, onBack, onComplete, onCompleteWithPhoto, onUpgrade }) => {
   const [showCompletion, setShowCompletion] = useState(false);
+  const [showPhotoCapture, setShowPhotoCapture] = useState(false);
   const [completionMood, setCompletionMood] = useState<EmotionalState | null>(null);
 
   const moodOptions = [
@@ -37,6 +42,30 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onBack, onComplete }) => 
       onBack();
     }
   };
+
+  const handleCompleteWithPhoto = () => {
+    if (completionMood) {
+      setShowPhotoCapture(true);
+    }
+  };
+
+  const handlePhotoCapture = (photo: string) => {
+    if (completionMood) {
+      onCompleteWithPhoto(task.id, completionMood, photo);
+      setShowPhotoCapture(false);
+      onBack();
+    }
+  };
+
+  if (showPhotoCapture) {
+    return (
+      <PhotoCapture
+        taskTitle={task.title}
+        onPhotoCapture={handlePhotoCapture}
+        onCancel={() => setShowPhotoCapture(false)}
+      />
+    );
+  }
 
   if (showCompletion) {
     return (
@@ -69,13 +98,34 @@ const TaskDetail: React.FC<TaskDetailProps> = ({ task, onBack, onComplete }) => 
             ))}
           </div>
 
-          <button
-            onClick={handleComplete}
-            disabled={!completionMood}
-            className="w-full py-4 bg-green-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition-colors"
-          >
-            Complete Task
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={handleComplete}
+              disabled={!completionMood}
+              className="w-full py-4 bg-green-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-700 transition-colors"
+            >
+              Complete Task
+            </button>
+
+            {userPlan.type === 'premium' ? (
+              <button
+                onClick={handleCompleteWithPhoto}
+                disabled={!completionMood}
+                className="w-full py-4 bg-blue-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <Camera className="w-5 h-5" />
+                Complete with Photo Proof
+              </button>
+            ) : (
+              <button
+                onClick={onUpgrade}
+                className="w-full py-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+              >
+                <Crown className="w-5 h-5" />
+                Upgrade for Photo Proof
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

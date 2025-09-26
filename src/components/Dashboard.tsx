@@ -1,10 +1,11 @@
 import React from 'react';
 import { Plus, BarChart3, Clock, AlertCircle, Target, Timer, Heart, Award } from 'lucide-react';
-import { Task } from '../types';
+import { Task, UserPlan } from '../types';
 import TaskCard from './TaskCard';
 
 interface DashboardProps {
   tasks: Task[];
+  userPlan: UserPlan;
   onTaskReminder: (task: Task) => void;
   onAddTask: () => void;
   onViewInsights: () => void;
@@ -16,6 +17,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ 
   tasks, 
+  userPlan,
   onTaskReminder, 
   onAddTask, 
   onViewInsights,
@@ -32,12 +34,22 @@ const Dashboard: React.FC<DashboardProps> = ({
     new Date(t.completedAt).toDateString() === now.toDateString()
   );
 
+  // For free users, only priority tasks get emotional check-ins
+  const getTaskReminderType = (task: Task) => {
+    if (userPlan.type === 'premium') return 'checkin';
+    return task.isPriority ? 'checkin' : 'simple';
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-4">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">Good afternoon! 👋</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Good afternoon! 👋</h1>
+            {userPlan.type === 'free' && (
+              <p className="text-xs text-gray-500">Free Plan • Emotional check-ins for priority habit only</p>
+            )}
+          </div>
           <div className="flex gap-2">
             <button
               onClick={onViewAchievements}
@@ -120,8 +132,10 @@ const Dashboard: React.FC<DashboardProps> = ({
               <TaskCard 
                 key={task.id} 
                 task={task} 
+                userPlan={userPlan}
                 onReminder={() => onTaskReminder(task)}
                 isOverdue={true}
+                reminderType={getTaskReminderType(task)}
               />
             ))}
           </div>
@@ -144,7 +158,9 @@ const Dashboard: React.FC<DashboardProps> = ({
               <TaskCard 
                 key={task.id} 
                 task={task} 
+                userPlan={userPlan}
                 onReminder={() => onTaskReminder(task)}
+                reminderType={getTaskReminderType(task)}
               />
             ))
           )}

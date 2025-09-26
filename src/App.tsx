@@ -11,13 +11,15 @@ import HabitTracker from './components/HabitTracker';
 import FocusTimer from './components/FocusTimer';
 import MoodTracker from './components/MoodTracker';
 import Achievements from './components/Achievements';
+import PremiumUpgrade from './components/PremiumUpgrade';
 import { Task, EmotionalState, CheckinResponse, Habit, FocusSession, MoodEntry, Achievement, PriorityHabit, PriorityHabitEvent } from './types';
+import { UserPlan } from './types';
 import { sampleTasks, sampleHabits, sampleMoodEntries, sampleAchievements } from './data/sampleData';
 
 function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [showPrioritySelection, setShowPrioritySelection] = useState(false);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'checkin' | 'priority-checkin' | 'task' | 'add' | 'insights' | 'habits' | 'focus' | 'mood' | 'achievements'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'checkin' | 'priority-checkin' | 'task' | 'add' | 'insights' | 'habits' | 'focus' | 'mood' | 'achievements' | 'premium'>('dashboard');
   const [tasks, setTasks] = useState<Task[]>(sampleTasks);
   const [habits, setHabits] = useState<Habit[]>(sampleHabits);
   const [focusSessions, setFocusSessions] = useState<FocusSession[]>([]);
@@ -27,14 +29,22 @@ function App() {
   const [priorityHabitEvents, setPriorityHabitEvents] = useState<PriorityHabitEvent[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [checkinTask, setCheckinTask] = useState<Task | null>(null);
+  const [userPlan, setUserPlan] = useState<UserPlan>({ type: 'free' });
 
   const handleTaskReminder = (task: Task) => {
-    if (task.isPriority) {
+    // Free users only get emotional check-ins for priority tasks
+    // Premium users get emotional check-ins for all tasks
+    const shouldShowCheckin = userPlan.type === 'premium' || task.isPriority;
+    
+    if (shouldShowCheckin && task.isPriority) {
       setCheckinTask(task);
       setCurrentView('priority-checkin');
-    } else {
+    } else if (shouldShowCheckin) {
       setCheckinTask(task);
       setCurrentView('checkin');
+    } else {
+      // Simple reminder for free users on non-priority tasks
+      alert(`Reminder: ${task.title}\n\nScheduled for: ${task.scheduledTime.toLocaleString()}`);
     }
   };
 
@@ -105,6 +115,25 @@ function App() {
         ? { ...t, completed: true, completionMood, completedAt: new Date() }
         : t
     ));
+  };
+
+  const completeTaskWithPhoto = (taskId: string, completionMood: EmotionalState, photo: string) => {
+    setTasks(prev => prev.map(t => 
+      t.id === taskId 
+        ? { ...t, completed: true, completionMood, completedAt: new Date(), completionPhoto: photo }
+        : t
+    ));
+  };
+
+  const handleUpgrade = () => {
+    setCurrentView('premium');
+  };
+
+  const handlePremiumUpgrade = () => {
+    // In a real app, this would integrate with payment processing
+    setUserPlan({ type: 'premium' });
+    setCurrentView('dashboard');
+    alert('Welcome to Premium! 🎉\nYou now have access to all features.');
   };
 
   const completeHabit = (habitId: string) => {
@@ -218,6 +247,7 @@ function App() {
       {currentView === 'dashboard' && (
         <Dashboard 
           tasks={tasks}
+          userPlan={userPlan}
           onTaskReminder={handleTaskReminder}
           onAddTask={() => setCurrentView('add')}
           onViewInsights={() => setCurrentView('insights')}
@@ -247,8 +277,11 @@ function App() {
       {currentView === 'task' && selectedTask && (
         <TaskDetail 
           task={selectedTask}
+          userPlan={userPlan}
           onBack={() => setCurrentView('dashboard')}
           onComplete={completeTask}
+          onCompleteWithPhoto={completeTaskWithPhoto}
+          onUpgrade={handleUpgrade}
         />
       )}
       
@@ -294,6 +327,13 @@ function App() {
         <Achievements 
           achievements={achievements}
           onBack={() => setCurrentView('dashboard')}
+        />
+      )}
+      
+      {currentView === 'premium' && (
+        <PremiumUpgrade 
+          onBack={() => setCurrentView('dashboard')}
+          onUpgrade={handlePremiumUpgrade}
         />
       )}
     </div>

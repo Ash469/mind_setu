@@ -1,14 +1,16 @@
 import React from 'react';
-import { Clock, AlertCircle, Star } from 'lucide-react';
-import { Task } from '../types';
+import { Clock, AlertCircle, Star, Crown, Bell } from 'lucide-react';
+import { Task, UserPlan } from '../types';
 
 interface TaskCardProps {
   task: Task;
+  userPlan: UserPlan;
   onReminder: () => void;
   isOverdue?: boolean;
+  reminderType: 'checkin' | 'simple';
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onReminder, isOverdue = false }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, userPlan, onReminder, isOverdue = false, reminderType }) => {
   const formatTime = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
@@ -78,6 +80,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onReminder, isOverdue = false
               <span>{formatTime(task.scheduledTime)}</span>
             </div>
           )}
+          
+          {/* Reminder Type Indicator */}
+          <div className="flex items-center gap-1 text-xs">
+            {reminderType === 'checkin' ? (
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full flex items-center gap-1">
+                🧠 Smart
+              </span>
+            ) : (
+              <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full flex items-center gap-1">
+                <Bell className="w-3 h-3" />
+                Simple
+              </span>
+            )}
+          </div>
         </div>
 
         <button
@@ -85,12 +101,27 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onReminder, isOverdue = false
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             isOverdue 
               ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' 
-              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              : reminderType === 'checkin'
+                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          {isOverdue ? 'Check In' : 'Start'}
+          {isOverdue 
+            ? (reminderType === 'checkin' ? 'Check In' : 'Remind') 
+            : (reminderType === 'checkin' ? 'Start' : 'Remind')
+          }
         </button>
       </div>
+      
+      {/* Premium Upgrade Hint for Free Users */}
+      {userPlan.type === 'free' && !task.isPriority && (
+        <div className="mt-3 p-2 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+          <div className="flex items-center gap-2 text-xs text-yellow-700">
+            <Crown className="w-3 h-3" />
+            <span>Upgrade to Premium for emotional check-ins on all tasks</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

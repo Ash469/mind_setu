@@ -12,6 +12,20 @@ export interface Task {
   adaptedAction?: string;
   completionMood?: EmotionalState;
   isPriority?: boolean;
+  completionPhoto?: string; // base64 or URL
+  subtasks?: Subtask[];
+}
+
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+  completionPhoto?: string;
+}
+
+export interface UserPlan {
+  type: 'free' | 'premium';
+  expiresAt?: Date;
 }
 
 export interface CheckinResponse {
