@@ -9,6 +9,8 @@ interface WeeklyInsightsProps {
 
 const WeeklyInsights: React.FC<WeeklyInsightsProps> = ({ tasks, onBack }) => {
   const completedTasks = tasks.filter(t => t.completed);
+  const priorityTasks = tasks.filter(t => t.isPriority);
+  const completedPriorityTasks = priorityTasks.filter(t => t.completed);
   const tasksWithMoodData = completedTasks.filter(t => t.lastCheckin && t.completionMood);
 
   // Calculate mood improvement
@@ -102,6 +104,27 @@ const WeeklyInsights: React.FC<WeeklyInsightsProps> = ({ tasks, onBack }) => {
             </div>
           ))}
         </div>
+
+        {/* Priority Habit Progress */}
+        {priorityTasks.length > 0 && (
+          <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-xl p-6 shadow-sm mb-6">
+            <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <span>⭐</span>
+              Priority Habit Progress
+            </h3>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-gray-800 mb-1">
+                {completedPriorityTasks.length}/{priorityTasks.length}
+              </div>
+              <p className="text-gray-600 text-sm">
+                {completedPriorityTasks.length > 0 
+                  ? `Great job! You completed your priority habit ${completedPriorityTasks.length} time${completedPriorityTasks.length > 1 ? 's' : ''} this week ✅`
+                  : 'Your priority habit is waiting for you 💪'
+                }
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Mood Trend */}
         <div className="bg-white rounded-xl p-6 shadow-sm mb-6">

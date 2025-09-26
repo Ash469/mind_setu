@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Onboarding from './components/Onboarding';
+import PriorityHabitSelection from './components/PriorityHabitSelection';
+import PriorityHabitCheckin from './components/PriorityHabitCheckin';
 import Dashboard from './components/Dashboard';
 import EmotionalCheckin from './components/EmotionalCheckin';
 import TaskDetail from './components/TaskDetail';
@@ -9,23 +11,31 @@ import HabitTracker from './components/HabitTracker';
 import FocusTimer from './components/FocusTimer';
 import MoodTracker from './components/MoodTracker';
 import Achievements from './components/Achievements';
-import { Task, EmotionalState, CheckinResponse, Habit, FocusSession, MoodEntry, Achievement } from './types';
+import { Task, EmotionalState, CheckinResponse, Habit, FocusSession, MoodEntry, Achievement, PriorityHabit, PriorityHabitEvent } from './types';
 import { sampleTasks, sampleHabits, sampleMoodEntries, sampleAchievements } from './data/sampleData';
 
 function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'checkin' | 'task' | 'add' | 'insights' | 'habits' | 'focus' | 'mood' | 'achievements'>('dashboard');
+  const [showPrioritySelection, setShowPrioritySelection] = useState(false);
+  const [currentView, setCurrentView] = useState<'dashboard' | 'checkin' | 'priority-checkin' | 'task' | 'add' | 'insights' | 'habits' | 'focus' | 'mood' | 'achievements'>('dashboard');
   const [tasks, setTasks] = useState<Task[]>(sampleTasks);
   const [habits, setHabits] = useState<Habit[]>(sampleHabits);
   const [focusSessions, setFocusSessions] = useState<FocusSession[]>([]);
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>(sampleMoodEntries);
   const [achievements, setAchievements] = useState<Achievement[]>(sampleAchievements);
+  const [priorityHabit, setPriorityHabit] = useState<PriorityHabit | null>(null);
+  const [priorityHabitEvents, setPriorityHabitEvents] = useState<PriorityHabitEvent[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [checkinTask, setCheckinTask] = useState<Task | null>(null);
 
   const handleTaskReminder = (task: Task) => {
-    setCheckinTask(task);
-    setCurrentView('checkin');
+    if (task.isPriority) {
+      setCheckinTask(task);
+      setCurrentView('priority-checkin');
+    } else {
+      setCheckinTask(task);
+      setCurrentView('checkin');
+    }
   };
 
   const handleCheckinComplete = (response: CheckinResponse) => {
@@ -128,10 +138,79 @@ function App() {
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
+    setShowPrioritySelection(true);
+  };
+
+  const handlePriorityHabitComplete = (habitData: Omit<PriorityHabit, 'id' | 'createdAt'>) => {
+    const newPriorityHabit: PriorityHabit = {
+      ...habitData,
+      id: Date.now().toString(),
+      createdAt: new Date()
+    };
+    setPriorityHabit(newPriorityHabit);
+    setShowPrioritySelection(false);
+    
+    // Add priority habit as a regular habit too
+    const newHabit: Habit = {
+      id: Date.now().toString(),
+      name: habitData.name,
+      category: habitData.category,
+      targetFrequency: 'weekly',
+      weeklyTarget: habitData.weeklyTarget,
+      streak: 0,
+      completedDates: [],
+      createdAt: new Date(),
+      color: '#EAB308',
+      isPriority: true
+    };
+    setHabits(prev => [...prev, newHabit]);
+  };
+
+  const handlePriorityHabitCheckin = (response: {
+    willingness: 'low' | 'medium' | 'high';
+    emotion: EmotionalState;
+    adaptedAction: string;
+  }) => {
+    if (checkinTask && priorityHabit) {
+      const event: PriorityHabitEvent = {
+        id: Date.now().toString(),
+        habitId: priorityHabit.id,
+        willingness: response.willingness,
+        emotion: response.emotion,
+        adaptedAction: response.adaptedAction,
+        completed: false,
+        timestamp: new Date()
+      };
+      setPriorityHabitEvents(prev => [...prev, event]);
+      
+      // Update task with adapted action
+      const updatedTask = {
+        ...checkinTask,
+        adaptedAction: response.adaptedAction,
+        lastCheckin: {
+          mood: response.emotion,
+          willingness: response.willingness,
+          timestamp: new Date()
+        }
+      };
+      
+      setTasks(prev => prev.map(t => t.id === checkinTask.id ? updatedTask : t));
+      setSelectedTask(updatedTask);
+      setCurrentView('task');
+    }
   };
 
   if (showOnboarding) {
     return <Onboarding onComplete={handleOnboardingComplete} />;
+  }
+
+  if (showPrioritySelection) {
+    return (
+      <PriorityHabitSelection 
+        onComplete={handlePriorityHabitComplete}
+        onBack={() => setShowPrioritySelection(false)}
+      />
+    );
   }
 
   return (
@@ -153,6 +232,14 @@ function App() {
         <EmotionalCheckin 
           task={checkinTask}
           onComplete={handleCheckinComplete}
+          onBack={() => setCurrentView('dashboard')}
+        />
+      )}
+      
+      {currentView === 'priority-checkin' && checkinTask && priorityHabit && (
+        <PriorityHabitCheckin 
+          habit={priorityHabit}
+          onComplete={handlePriorityHabitCheckin}
           onBack={() => setCurrentView('dashboard')}
         />
       )}

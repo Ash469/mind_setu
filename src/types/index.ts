@@ -11,6 +11,7 @@ export interface Task {
   lastCheckin?: CheckinResponse;
   adaptedAction?: string;
   completionMood?: EmotionalState;
+  isPriority?: boolean;
 }
 
 export interface CheckinResponse {
@@ -27,10 +28,30 @@ export interface Habit {
   description?: string;
   category: string;
   targetFrequency: 'daily' | 'weekly';
+  weeklyTarget?: number;
   streak: number;
   completedDates: Date[];
   createdAt: Date;
   color: string;
+  isPriority?: boolean;
+}
+
+export interface PriorityHabit {
+  id: string;
+  name: string;
+  category: string;
+  weeklyTarget: number;
+  createdAt: Date;
+}
+
+export interface PriorityHabitEvent {
+  id: string;
+  habitId: string;
+  willingness: 'low' | 'medium' | 'high';
+  emotion: EmotionalState;
+  adaptedAction: string;
+  completed: boolean;
+  timestamp: Date;
 }
 
 export interface FocusSession {

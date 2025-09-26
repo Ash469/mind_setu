@@ -10,7 +10,8 @@ export const sampleTasks: Task[] = [
     priority: 'high',
     category: 'Work',
     completed: false,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000)
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    isPriority: true
   },
   {
     id: '2',

@@ -48,6 +48,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onReminder, isOverdue = false
           )}
           
           <div className="flex items-center gap-2 flex-wrap">
+            {task.isPriority && (
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 flex items-center gap-1">
+                <span>⭐</span>
+                Priority
+              </span>
+            )}
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(task.category)}`}>
               {task.category}
             </span>
