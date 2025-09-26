@@ -7,7 +7,7 @@ export const sampleTasks: Task[] = [
     title: 'Write project report',
     description: 'Complete the quarterly project report for client presentation',
     scheduledTime: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
-    priority: 'high',
+    priority: 'medium',
     category: 'Work',
     completed: false,
     createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
